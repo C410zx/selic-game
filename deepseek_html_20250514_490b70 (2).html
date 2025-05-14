@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Banco Central Simulator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #3498db;
+            --primary-dark: #2980b9;
+            --positive: #2ecc71;
+            --negative: #e74c3c;
+            --neutral: #f39c12;
+            --dark: #2c3e50;
+            --light: #ecf0f1;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', sans-serif;
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        h1, h2, h3 {
+            color: var(--dark);
+            text-align: center;
+        }
+
+        h1 {
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+
+        .character {
+            display: flex;
+            align-items: center;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary);
+            transition: all 0.3s ease;
+        }
+
+        .character:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .character-img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 15px;
+            border: 3px solid var(--primary);
+        }
+
+        .stats {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid var(--primary);
+        }
+
+        .stat-bar {
+            height: 10px;
+            background-color: #ddd;
+            border-radius: 5px;
+            margin: 5px 0 15px;
+            overflow: hidden;
+        }
+
+        .stat-fill {
+            height: 100%;
+            background-color: var(--primary);
+            width: 0%;
+            transition: width 1s ease;
+        }
+
+        .options {
+            margin-top: 30px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        .option-btn {
+            display: flex;
+            align-items: center;
+            background-color: var(--primary);
+            color: white;
+            text-decoration: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            font-size: 1em;
+        }
+
+        .option-btn i {
+            margin-right: 10px;
+            font-size: 1.2em;
+        }
+
+        .option-btn:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .result {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .positive {
+            background-color: rgba(46, 204, 113, 0.1);
+            border-left: 4px solid var(--positive);
+        }
+
+        .negative {
+            background-color: rgba(231, 76, 60, 0.1);
+            border-left: 4px solid var(--negative);
+        }
+
+        .neutral {
+            background-color: rgba(243, 156, 18, 0.1);
+            border-left: 4px solid var(--neutral);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.8em;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+
+        .badge-positive {
+            background-color: var(--positive);
+            color: white;
+        }
+
+        .badge-negative {
+            background-color: var(--negative);
+            color: white;
+        }
+
+        .badge-neutral {
+            background-color: var(--neutral);
+            color: white;
+        }
+
+        .selic-display {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background-color: var(--dark);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+        }
+
+        .score-display {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: var(--dark);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+        }
+
+        .day-indicator {
+            text-align: center;
+            font-weight: bold;
+            color: var(--primary);
+            margin: 15px 0;
+            font-size: 1.1em;
+        }
+
+        .intro-image {
+            width: 100%;
+            max-height: 300px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin: 20px 0;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .explanation {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid var(--primary);
+        }
+
+        .start-btn {
+            display: block;
+            width: 200px;
+            margin: 30px auto;
+            background-color: var(--primary);
+            color: white;
+            text-align: center;
+            padding: 15px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1.1em;
+            transition: all 0.3s ease;
+        }
+
+        .start-btn:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .news-alert {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 10px;
+            border-radius: 0 5px 5px 0;
+            margin: 15px 0;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.01); }
+            100% { transform: scale(1); }
+        }
+
+        .trend-indicator {
+            display: inline-block;
+            margin-left: 5px;
+        }
+
+        .trend-up {
+            color: var(--negative);
+        }
+
+        .trend-down {
+            color: var(--positive);
+        }
+
+        .trend-neutral {
+            color: var(--neutral);
+        }
+
+        .character-speech {
+            position: relative;
+            padding-left: 15px;
+        }
+
+        .character-speech:before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background-color: var(--primary);
+            border-radius: 3px;
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+            border-bottom: 1px dotted var(--primary);
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: var(--dark);
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.8em;
+            font-weight: normal;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .achievement-badge {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: var(--positive);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+            z-index: 100;
+            display: none;
+            align-items: center;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+
+        .progress-container {
+            width: 100%;
+            background-color: #f1f1f1;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+
+        .progress-bar {
+            height: 10px;
+            background-color: var(--primary);
+            border-radius: 5px;
+            width: 0%;
+            transition: width 1s ease;
+        }
+
+        @media (max-width: 600px) {
+            .selic-display, .score-display {
+                position: static;
+                display: inline-block;
+                margin: 10px;
+                width: calc(50% - 20px);
+                box-sizing: border-box;
+            }
+            
+            .options {
+                grid-template-columns: 1fr;
+            }
+            
+            .character {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .character-img {
+                margin-right: 0;
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="game-container">
+        <!-- O conteúdo do jogo será injetado aqui pelo JavaScript -->
+    </div>
+
+    <div class="achievement-badge" id="achievement-badge">
+        <i class="fas fa-trophy" style="margin-right: 10px;"></i>
+        <span id="achievement-text"></span>
+    </div>
+
+    <script>
+        // Estado do jogo
+        const gameState = {
+            currentDay: -1, // -1 para tela inicial
+            score: 0,
+            economy: {
+                inflation: 7.5,
+                gdp: 0.3,
+                unemployment: 8.7,
+                selic: 10.75,
+                dollar: 5.00,
+                reserves: 340
+            },
+            achievements: []
+        };
+
+        // Conquistas possíveis
+        const achievements = [
+            { id: 'first_decision', name: 'Primeira Decisão', description: 'Tomou sua primeira decisão como presidente do BC', earned: false },
+            { id: 'inflation_control', name: 'Controlador de Inflação', description: 'Manteve a inflação abaixo de 5%', earned: false },
+            { id: 'market_favorite', name: 'Queridinho do Mercado', description: 'Obteve mais de 100 pontos', earned: false },
+            { id: 'selic_expert', name: 'Expert em Selic', description: 'Ajustou a Selic para exatamente 8%', earned: false },
+            { id: 'perfect_score', name: 'Perfeição Econômica', description: 'Alcançou a pontuação máxima', earned: false }
+        ];
+
+        // Dias do jogo (melhorados com mais detalhes)
+        const days = [
+            {
+                title: "Dia 1 - Crise Internacional",
+                description: "Crise bancária internacional! Investidores estão retirando dinheiro de países emergentes. O dólar já subiu 2% hoje.",
+                options: [
+                    {
+                        text: "📈 Aumentar Selic em 1% (atrair investidores)",
+                        icon: "fa-chart-line",
+                        effect: () => {
+                            gameState.economy.selic += 1;
+                            gameState.economy.inflation -= 0.5;
+                            gameState.economy.dollar *= 0.95;
+                            gameState.score += 15;
+                            checkAchievement('first_decision');
+                            return {
+                                message: "📈 Você aumentou a Selic!",
+                                results: [
+                                    "Dólar caiu para R$" + (gameState.economy.dollar).toFixed(2) + " <span class='badge badge-positive'>+15</span>",
+                                    "Inflação reduziu para " + gameState.economy.inflation.toFixed(1) + "%",
+                                    "Mercado financeiro aprovou a decisão"
+                                ],
+                                type: "positive"
+                            };
+                        }
+                    },
+                    {
+                        text: "➖ Manter Selic (esperar poeira baixar)",
+                        icon: "fa-balance-scale",
+                        effect: () => {
+                            gameState.economy.dollar *= 1.05;
+                            gameState.score += 5;
+                            checkAchievement('first_decision');
+                            return {
+                                message: "➖ Você manteve a Selic!",
+                                results: [
+                                    "Dólar subiu para R$" + (gameState.economy.dollar).toFixed(2) + " <span class='badge badge-neutral'>+5</span>",
+                                    "Mercado ficou na expectativa",
+                                    "Governo agradeceu a prudência"
+                                ],
+                                type: "neutral"
+                            };
+                        }
+                    },
+                    {
+                        text: "🛡️ Usar reservas para segurar dólar",
+                        icon: "fa-shield-alt",
+                        effect: () => {
+                            gameState.economy.reserves -= 5;
+                            gameState.economy.dollar *= 1.02;
+                            gameState.score += 0;
+                            checkAchievement('first_decision');
+                            return {
+                                message: "🛡️ Você usou reservas cambiais!",
+                                results: [
+                                    "Dólar ficou em R$" + (gameState.economy.dollar).toFixed(2) + " <span class='badge badge-neutral'>+0</span>",
+                                    "Reservas caíram US$ 5 bilhões",
+                                    "Exportadores comemoraram"
+                                ],
+                                type: "neutral"
+                            };
+                        }
+                    }
+                ]
+            },
+            {
+                title: "Dia 2 - Greve dos Caminhoneiros",
+                description: "Greve nacional de caminhoneiros! Risco de desabastecimento e alta de preços. Postos sem gasolina em várias cidades.",
+                options: [
+                    {
+                        text: "📈 Aumentar juros para conter inflação",
+                        icon: "fa-hand-holding-usd",
+                        effect: () => {
+                            gameState.economy.selic += 0.5;
+                            gameState.economy.inflation -= 0.3;
+                            gameState.score += 10;
+                            return {
+                                message: "📈 Você aumentou os juros!",
+                                results: [
+                                    "Inflação controlada em " + gameState.economy.inflation.toFixed(1) + "% <span class='badge badge-positive'>+10</span>",
+                                    "Caminhoneiros ficaram insatisfeitos",
+                                    "Mercado aprovou a decisão técnica"
+                                ],
+                                type: "positive"
+                            };
+                        }
+                    },
+                    {
+                        text: "📉 Reduzir juros para ajudar transporte",
+                        icon: "fa-truck-moving",
+                        effect: () => {
+                            gameState.economy.selic -= 0.5;
+                            gameState.economy.inflation += 0.8;
+                            gameState.score -= 10;
+                            return {
+                                message: "📉 Você reduziu os juros!",
+                                results: [
+                                    "Caminhoneiros voltaram a trabalhar <span class='badge badge-negative'>-10</span>",
+                                    "Inflação subiu para " + gameState.economy.inflation.toFixed(1) + "%",
+                                    "Governo agradeceu a medida"
+                                ],
+                                type: "negative"
+                            };
+                        }
+                    },
+                    {
+                        text: "🤝 Negociar com caminhoneiros",
+                        icon: "fa-handshake",
+                        effect: () => {
+                            gameState.economy.reserves -= 1;
+                            gameState.economy.inflation += 0.3;
+                            gameState.score += 15;
+                            return {
+                                message: "🤝 Você negociou com os caminhoneiros!",
+                                results: [
+                                    "Greve suspensa por 30 dias <span class='badge badge-positive'>+15</span>",
+                                    "Inflação subiu para " + gameState.economy.inflation.toFixed(1) + "%",
+                                    "Todos elogiaram a mediação"
+                                ],
+                                type: "positive"
+                            };
+                        }
+                    }
+                ]
+            },
+            {
+                title: "Dia 3 - Pressão Política",
+                description: "Pressão política para reduzir juros antes das eleições, mas economistas alertam para riscos. O ministro da economia ligou pessoalmente.",
+                options: [
+                    {
+                        text: "🦅 Manter independência do BC (não ceder)",
+                        icon: "fa-dove",
+                        effect: () => {
+                            gameState.economy.dollar *= 0.97;
+                            gameState.score += 20;
+                            return {
+                                message: "🦅 Você manteve a independência!",
+                                results: [
+                                    "Credibilidade do BC aumentou <span class='badge badge-positive'>+20</span>",
+                                    "Dólar caiu para R$" + (gameState.economy.dollar).toFixed(2),
+                                    "Presidente ficou irritado"
+                                ],
+                                type: "positive"
+                            };
+                        }
+                    },
+                    {
+                        text: "🤝 Pequeno corte simbólico",
+                        icon: "fa-comments-dollar",
+                        effect: () => {
+                            gameState.economy.selic -= 0.25;
+                            gameState.economy.inflation += 0.2;
+                            gameState.score += 5;
+                            return {
+                                message: "🤝 Você fez um corte simbólico!",
+                                results: [
+                                    "Governo ficou menos irritado <span class='badge badge-neutral'>+5</span>",
+                                    "Inflação subiu para " + gameState.economy.inflation.toFixed(1) + "%",
+                                    "Mercado entendeu como gesto político"
+                                ],
+                                type: "neutral"
+                            };
+                        }
+                    },
+                    {
+                        text: "👔 Cortar juros como pede o governo",
+                        icon: "fa-user-tie",
+                        effect: () => {
+                            gameState.economy.selic -= 1;
+                            gameState.economy.inflation += 1.5;
+                            gameState.economy.dollar *= 1.08;
+                            gameState.score -= 15;
+                            return {
+                                message: "👔 Você cedeu ao governo!",
+                                results: [
+                                    "Presidente te elogiou publicamente <span class='badge badge-negative'>-15</span>",
+                                    "Inflação disparou para " + gameState.economy.inflation.toFixed(1) + "%",
+                                    "Mercado reagiu mal à decisão"
+                                ],
+                                type: "negative"
+                            };
+                        }
+                    }
+                ]
+            },
+            {
+                title: "Dia 4 - Pandemia Global",
+                description: "Nova variante de vírus causa pânico global! Mercados em colapso e recessão iminente. Bolsas caíram mais de 10% hoje.",
+                options: [
+                    {
+                        text: "💉 Pacote de estímulo econômico",
+                        icon: "fa-syringe",
+                        effect: () => {
+                            gameState.economy.selic -= 0.75;
+                            gameState.economy.gdp += 0.5;
+                            gameState.economy.inflation += 1.2;
+                            gameState.score += 10;
+                            return {
+                                message: "💉 Você liberou estímulos!",
+                                results: [
+                                    "Economia reagiu positivamente <span class='badge badge-positive'>+10</span>",
+                                    "Inflação subiu para " + gameState.economy.inflation.toFixed(1) + "%",
+                                    "População aprovou as medidas"
+                                ],
+                                type: "positive"
+                            };
+                        }
+                    },
+                    {
+                        text: "🏦 Manter política restritiva",
+                        icon: "fa-university",
+                        effect: () => {
+                            gameState.economy.gdp -= 0.8;
+                            gameState.economy.unemployment += 1.5;
+                            gameState.score -= 5;
+                            return {
+                                message: "🏦 Você manteve políticas restritivas!",
+                                results: [
+                                    "Economia entrou em recessão <span class='badge badge-negative'>-5</span>",
+                                    "Inflação controlada em " + gameState.economy.inflation.toFixed(1) + "%",
+                                    "Mercado elogiou a prudência"
+                                ],
+                                type: "negative"
+                            };
+                        }
+                    },
+                    {
+                        text: "⚖️ Medidas equilibradas",
+                        icon: "fa-weight-hanging",
+                        effect: () => {
+                            gameState.economy.selic -= 0.25;
+                            gameState.economy.gdp += 0.1;
+                            gameState.economy.inflation += 0.5;
+                            gameState.score += 15;
+                            return {
+                                message: "⚖️ Você adotou medidas equilibradas!",
+                                results: [
+                                    "Economia estável <span class='badge badge-positive'>+15</span>",
+                                    "Inflação moderada em " + gameState.economy.inflation.toFixed(1) + "%",
+                                    "Todos aprovaram a abordagem"
+                                ],
+                                type: "positive"
+                            };
+                        }
+                    }
+                ]
+            },
+            {
+                title: "Dia 5 - Commodities em Alta",
+                description: "Preço das commodities disparou! Soja +15%, Minério +20%. Ótimo para exportadores, mas risco de inflação.",
+                options: [
+                    {
+                        text: "📉 Cortar juros para valorizar exportações",
+                        icon: "fa-arrow-down",
+                        effect: () => {
+                            gameState.economy.selic -= 0.5;
+                            gameState.economy.dollar *= 1.1;
+                            gameState.economy.gdp += 0.7;
+                            gameState.score += 5;
+                            return {
+                                message: "📉 Você cortou juros!",
+                                results: [
+                                    "Exportadores comemoraram <span class='badge badge-positive'>+5</span>",
+                                    "Dólar subiu para R$" + (gameState.economy.dollar).toFixed(2),
+                                    "Inflação pressionada"
+                                ],
+                                type: "neutral"
+                            };
+                        }
+                    },
+                    {
+                        text: "📈 Aumentar juros para conter inflação",
+                        icon: "fa-arrow-up",
+                        effect: () => {
+                            gameState.economy.selic += 0.5;
+                            gameState.economy.dollar *= 0.92;
+                            gameState.economy.inflation -= 0.6;
+                            gameState.score += 10;
+                            return {
+                                message: "📈 Você aumentou juros!",
+                                results: [
+                                    "Inflação controlada <span class='badge badge-positive'>+10</span>",
+                                    "Dólar caiu para R$" + (gameState.economy.dollar).toFixed(2),
+                                    "Exportadores reclamaram"
+                                ],
+                                type: "positive"
+                            };
+                        }
+                    },
+                    {
+                        text: "💰 Criar fundo de estabilização",
+                        icon: "fa-piggy-bank",
+                        effect: () => {
+                            gameState.economy.reserves -= 10;
+                            gameState.score += 20;
+                            return {
+                                message: "💰 Você criou fundo de estabilização!",
+                                results: [
+                                    "Economia mais resiliente <span class='badge badge-positive'>+20</span>",
+                                    "Reservas caíram US$ 10 bi",
+                                    "Mercado aprovou a medida"
+                                ],
+                                type: "positive"
+                            };
+                        }
+                    }
+                ]
+            },
+            {
+                title: "Dia 6 - Escândalo Político",
+                description: "Escândalo de corrupção abala governo! Vazou conversa do presidente pedindo propina. Risco de impeachment.",
+                options: [
+                    {
+                        text: "🦅 Manter neutralidade do BC",
+                        icon: "fa-landmark",
+                        effect: () => {
+                            gameState.score += 25;
+                            return {
+                                message: "🦅 Você manteve neutralidade!",
+                                results: [
+                                    "Credibilidade institucional <span class='badge badge-positive'>+25</span>",
+                                    "Mercado reagiu positivamente",
+                                    "Governo ficou irritado"
+                                ],
+                                type: "positive"
+                            };
+                        }
+                    },
+                    {
+                        text: "🤝 Apoiar discretamente o governo",
+                        icon: "fa-comment-dollar",
+                        effect: () => {
+                            gameState.score -= 10;
+                            return {
+                                message: "🤝 Você apoiou discretamente!",
+                                results: [
+                                    "Governo agradeceu <span class='badge badge-negative'>-10</span>",
+                                    "Mercado desconfiou",
+                                    "Mídia criticou"
+                                ],
+                                type: "negative"
+                            };
+                        }
+                    },
+                    {
+                        text: "📉 Cortar juros para aliviar crise",
+                        icon: "fa-umbrella-beach",
+                        effect: () => {
+                            gameState.economy.selic -= 0.75;
+                            gameState.economy.inflation += 1.0;
+                            gameState.score += 5;
+                            return {
+                                message: "📉 Você cortou juros!",
+                                results: [
+                                    "Economia aliviada <span class='badge badge-neutral'>+5</span>",
+                                    "Inflação subiu para " + gameState.economy.inflation.toFixed(1) + "%",
+                                    "Críticas mistas"
+                                ],
+                                type: "neutral"
+                            };
+                        }
+                    }
+                ]
+            },
+            {
+                title: "Dia 7 - Crise Energética",
+                description: "Apagões em várias regiões! Reservatórios em 15%. Indústrias paradas e risco de desemprego em massa.",
+                options: [
+                    {
+                        text: "💡 Subsidiar energia para indústrias",
+                        icon: "fa-lightbulb",
+                        effect: () => {
+                            gameState.economy.reserves -= 8;
+                            gameState.economy.unemployment -= 1.2;
+                            gameState.score += 15;
+                            return {
+                                message: "💡 Você subsidiou energia!",
+                                results: [
+                                    "Empregos preservados <span class='badge badge-positive'>+15</span>",
+                                    "Reservas caíram US$ 8 bi",
+                                    "Setor industrial agradeceu"
+                                ],
+                                type: "positive"
+                            };
+                        }
+                    },
+                    {
+                        text: "⚡ Deixar mercado se ajustar",
+                        icon: "fa-bolt",
+                        effect: () => {
+                            gameState.economy.unemployment += 2.0;
+                            gameState.economy.gdp -= 1.2;
+                            gameState.score -= 15;
+                            return {
+                                message: "⚡ Você deixou mercado se ajustar!",
+                                results: [
+                                    "Desemprego subiu para " + gameState.economy.unemployment.toFixed(1) + "% <span class='badge badge-negative'>-15</span>",
+                                    "PIB caiu",
+                                    "Mercado elogiou não-intervenção"
+                                ],
+                                type: "negative"
+                            };
+                        }
+                    },
+                    {
+                        text: "🌱 Investir em energias alternativas",
+                        icon: "fa-leaf",
+                        effect: () => {
+                            gameState.economy.reserves -= 5;
+                            gameState.score += 20;
+                            return {
+                                message: "🌱 Você investiu em energia limpa!",
+                                results: [
+                                    "Solução de longo prazo <span class='badge badge-positive'>+20</span>",
+                                    "Reservas caíram US$ 5 bi",
+                                    "Comunidade internacional elogiou"
+                                ],
+                                type: "positive"
+                            };
+                        }
+                    }
+                ]
+            },
+            {
+                title: "Dia 8 - Fim do Mandato",
+                description: "Seu período como presidente do BC está terminando. Últimas decisões antes da transição para o novo presidente.",
+                options: [
+                    {
+                        text: "📊 Preparar relatório transparente",
+                        icon: "fa-file-alt",
+                        effect: () => {
+                            gameState.score += 30;
+                            checkAchievement('market_favorite');
+                            if (gameState.score >= 240) checkAchievement('perfect_score');
+                            return {
+                                message: "📊 Relatório transparente!",
+                                results: [
+                                    "Legado de transparência <span class='badge badge-positive'>+30</span>",
+                                    "Mercado reagiu muito bem",
+                                    "Próximo presidente agradeceu"
+                                ],
+                                type: "positive"
+                            };
+                        }
+                    },
+                    {
+                        text: "🎯 Focar em últimos ajustes",
+                        icon: "fa-bullseye",
+                        effect: () => {
+                            gameState.economy.selic += 0.25;
+                            gameState.economy.inflation -= 0.3;
+                            gameState.score += 15;
+                            if (Math.abs(gameState.economy.selic - 8) < 0.1) checkAchievement('selic_expert');
+                            return {
+                                message: "🎯 Últimos ajustes realizados!",
+                                results: [
+                                    "Economia mais equilibrada <span class='badge badge-positive'>+15</span>",
+                                    "Inflação em " + gameState.economy.inflation.toFixed(1) + "%",
+                                    "Transição facilitada"
+                                ],
+                                type: "positive"
+                            };
+                        }
+                    },
+                    {
+                        text: "🤝 Facilitar transição política",
+                        icon: "fa-people-arrows",
+                        effect: () => {
+                            gameState.score += 10;
+                            return {
+                                message: "🤝 Transição facilitada!",
+                                results: [
+                                    "Processo tranquilo <span class='badge badge-positive'>+10</span>",
+                                    "Novo governo satisfeito",
+                                    "Mercado neutro"
+                                ],
+                                type: "neutral"
+                            };
+                        }
+                    }
+                ]
+            }
+        ];
+
+        // Elementos da UI
+        const container = document.getElementById('game-container');
+        const selicDisplay = document.createElement('div');
+        selicDisplay.className = 'selic-display';
+        selicDisplay.innerHTML = `<i class="fas fa-percentage" style="margin-right: 8px;"></i> Selic: ${gameState.economy.selic.toFixed(2)}% (Meta: 3,5%)`;
+        document.body.appendChild(selicDisplay);
+
+        const scoreDisplay = document.createElement('div');
+        scoreDisplay.className = 'score-display';
+        scoreDisplay.innerHTML = `<i class="fas fa-star" style="margin-right: 8px;"></i> Pontuação: ${gameState.score}`;
+        document.body.appendChild(scoreDisplay);
+
+        const achievementBadge = document.getElementById('achievement-badge');
+        const achievementText = document.getElementById('achievement-text');
+
+        // Atualiza os displays
+        function updateDisplays() {
+            selicDisplay.innerHTML = `<i class="fas fa-percentage" style="margin-right: 8px;"></i> Selic: ${gameState.economy.selic.toFixed(2)}% (Meta: 3,5%)`;
+            scoreDisplay.innerHTML = `<i class="fas fa-star" style="margin-right: 8px;"></i> Pontuação: ${gameState.score}`;
+            
+            // Atualiza barras de progresso
+            setTimeout(() => {
+                document.querySelectorAll('.stat-fill').forEach(el => {
+                    const stat = el.getAttribute('data-stat');
+                    const value = gameState.economy[stat];
+                    let percentage;
+                    
+                    if (stat === 'inflation') {
+                        percentage = Math.min(100, (value / 15) * 100);
+                    } else if (stat === 'gdp') {
+                        percentage = 50 + (value * 20);
+                    } else if (stat === 'unemployment') {
+                        percentage = Math.min(100, value * 5);
+                    } else if (stat === 'dollar') {
+                        percentage = Math.min(100, (value / 10) * 100);
+                    } else if (stat === 'selic') {
+                        percentage = Math.min(100, (value / 20) * 100);
+                    }
+                    
+                    el.style.width = percentage + '%';
+                });
+            }, 100);
+        }
+
+        // Mostra conquista
+        function showAchievement(achievement) {
+            achievementText.textContent = `${achievement.name}: ${achievement.description}`;
+            achievementBadge.style.display = 'flex';
+            
+            setTimeout(() => {
+                achievementBadge.style.display = 'none';
+            }, 5000);
+        }
+
+        // Verifica conquistas
+        function checkAchievement(id) {
+            const achievement = achievements.find(a => a.id === id);
+            
+            if (achievement && !achievement.earned) {
+                achievement.earned = true;
+                gameState.achievements.push(achievement);
+                showAchievement(achievement);
+                
+                // Verifica conquista de controle de inflação
+                if (id === 'first_decision' && gameState.economy.inflation < 5) {
+                    checkAchievement('inflation_control');
+                }
+            }
+        }
+
+        // Renderiza a tela inicial
+        function renderIntro() {
+            let html = `
+                <h1>Banco Central Simulator</h1>
+                <img src="https://images.unsplash.com/photo-1553729459-efe14ef6055d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80" class="intro-image" alt="Banco Central">
+                
+                <div class="character">
+                    <img src="download (2).jpeg" class="character-img" alt="Neymar Gerente">
+                    <div class="character-speech">
+                        <strong>Neymar Jr. (Presidente do BC):</strong> "Fala meu cria! Tô indo pra Paris curtir umas férias e você vai assumir meu lugar aqui no BC. Bora aprender a jogar esse jogo de economia? Olha, não é tão diferente do futebol - tem que ter estratégia, visão de jogo e saber quando arriscar!"
+                    </div>
+                </div>
+                
+                <div class="explanation">
+                    <h3>O que é a Taxa Selic? <span class="tooltip">ℹ️<span class="tooltiptext">Sistema Especial de Liquidação e Custódia</span></span></h3>
+                    <p>A <b>Taxa Selic</b> é a taxa básica de juros da economia brasileira. Ela influencia:</p>
+                    <ul>
+                        <li><i class="fas fa-chart-line"></i> <b>Inflação:</b> Juros altos reduzem consumo e controlam preços</li>
+                        <li><i class="fas fa-business-time"></i> <b>Crescimento:</b> Juros baixos estimulam empréstimos e investimentos</li>
+                        <li><i class="fas fa-dollar-sign"></i> <b>Câmbio:</b> Juros altos atraem dólares e valorizam o Real</li>
+                    </ul>
+                    
+                    <div class="progress-container">
+                        <div class="progress-bar" style="width: ${(gameState.economy.selic / 20) * 100}%"></div>
+                    </div>
+                    <p>Sua meta é 3,5%, mas tá em ${gameState.economy.selic}% agora. Você terá <b>8 dias</b> de decisões difíceis!</p>
+                </div>
+                
+                <a href="#" class="start-btn" id="start-btn"><i class="fas fa-play" style="margin-right: 8px;"></i> Começar o Desafio</a>
+            `;
+
+            container.innerHTML = html;
+
+            document.getElementById('start-btn').addEventListener('click', (e) => {
+                e.preventDefault();
+                gameState.currentDay = 0;
+                renderDay();
+            });
+
+            updateDisplays();
+        }
+
+        // Renderiza o dia atual
+        function renderDay() {
+            if (gameState.currentDay >= days.length) {
+                renderFinalResult();
+                return;
+            }
+
+            const day = days[gameState.currentDay];
+            
+            // Determina tendências para exibição
+            const inflationTrend = gameState.economy.inflation > 7.5 ? "up" : (gameState.economy.inflation < 7.5 ? "down" : "neutral");
+            const gdpTrend = gameState.economy.gdp > 0.3 ? "up" : (gameState.economy.gdp < 0.3 ? "down" : "neutral");
+            const unemploymentTrend = gameState.economy.unemployment > 8.7 ? "up" : (gameState.economy.unemployment < 8.7 ? "down" : "neutral");
+            const dollarTrend = gameState.economy.dollar > 5.00 ? "up" : (gameState.economy.dollar < 5.00 ? "down" : "neutral");
+            const selicTrend = gameState.economy.selic > 10.75 ? "up" : (gameState.economy.selic < 10.75 ? "down" : "neutral");
+            
+            // Dicas do Neymar para cada dia
+            const neymarTips = [
+                "Cara, crise internacional é osso... Se fosse eu, pensaria em aumentar a Selic pra segurar o dólar. Mas cuidado pra não exagerar!",
+                "Greve de caminhoneiro é fogo! Eu tentaria negociar, mas se a inflação subir muito, o mercado vai cair matando em cima da gente!",
+                "Política é complicado, parceiro. Eu manteria a independência do BC, mas daria um osso pro governo pra não ficar feio...",
+                "Pandemia de novo? Puts! Tem que ajudar o povo, mas sem deixar a inflação disparar. Equilíbrio é a chave!",
+                "Commodity subindo é bom pra exportação, mas pode esquentar a economia. Eu daria uma segurada nos juros!",
+                "Escândalo político? Melhor ficar neutro, mano. Não boto minha mão no fogo por político não!",
+                "Falta de energia é osso! Eu investiria em energia limpa, é o futuro. Mas se precisar, usa um pouco das reservas!",
+                "Último dia? Faz um relatório transparente, deixa teu legado! Eu mesmo sempre jogo limpo... na maior parte do tempo!"
+            ];
+            
+            let html = `
+                <h1>Banco Central Simulator</h1>
+                <div class="day-indicator">${day.title}</div>
+                
+                <div class="character">
+                    <img src="download (2).jpeg" class="character-img" alt="Neymar Gerente">
+                    <div class="character-speech">
+                        <strong>Neymar Jr.:</strong> "E aí, chefe! ${day.description}"
+                        <div style="margin-top: 10px; font-style: italic; color: #555;">"${neymarTips[gameState.currentDay]}"</div>
+                    </div>
+                </div>
+                
+                <div class="stats">
+                    <h3><i class="fas fa-chart-pie"></i> Situação Econômica:</h3>
+                    <p>- Inflação: <b>${gameState.economy.inflation.toFixed(1)}% ao ano</b> (meta: 3,5%) 
+                        <span class="trend-indicator"><i class="fas fa-arrow-${inflationTrend} trend-${inflationTrend}"></i></span></p>
+                    <div class="stat-bar"><div class="stat-fill" data-stat="inflation" style="width: ${(gameState.economy.inflation / 15) * 100}%"></div></div>
+                    
+                    <p>- PIB: <b>${gameState.economy.gdp >= 0 ? '+' : ''}${gameState.economy.gdp.toFixed(1)}%</b> (trimestral)
+                        <span class="trend-indicator"><i class="fas fa-arrow-${gdpTrend} trend-${gdpTrend}"></i></span></p>
+                    <div class="stat-bar"><div class="stat-fill" data-stat="gdp" style="width: ${50 + (gameState.economy.gdp * 20)}%"></div></div>
+                    
+                    <p>- Desemprego: <b>${gameState.economy.unemployment.toFixed(1)}%</b>
+                        <span class="trend-indicator"><i class="fas fa-arrow-${unemploymentTrend} trend-${unemploymentTrend}"></i></span></p>
+                    <div class="stat-bar"><div class="stat-fill" data-stat="unemployment" style="width: ${gameState.economy.unemployment * 5}%"></div></div>
+                    
+                    <p>- Dólar: <b>R$${gameState.economy.dollar.toFixed(2)}</b>
+                        <span class="trend-indicator"><i class="fas fa-arrow-${dollarTrend} trend-${dollarTrend}"></i></span></p>
+                    <div class="stat-bar"><div class="stat-fill" data-stat="dollar" style="width: ${(gameState.economy.dollar / 10) * 100}%"></div></div>
+                    
+                    <p>- Selic: <b>${gameState.economy.selic.toFixed(2)}%</b>
+                        <span class="trend-indicator"><i class="fas fa-arrow-${selicTrend} trend-${selicTrend}"></i></span></p>
+                    <div class="stat-bar"><div class="stat-fill" data-stat="selic" style="width: ${(gameState.economy.selic / 20) * 100}%"></div></div>
+                </div>
+                
+                <h3><i class="fas fa-question-circle"></i> Qual sua decisão?</h3>
+                <div class="options">
+            `;
+
+            day.options.forEach((option, index) => {
+                html += `
+                    <button class="option-btn" data-option="${index}">
+                        <i class="fas ${option.icon}"></i> ${option.text}
+                    </button>
+                `;
+            });
+
+            html += `</div>`;
+            container.innerHTML = html;
+
+            // Adiciona eventos aos botões
+            document.querySelectorAll('.option-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const optionIndex = parseInt(btn.getAttribute('data-option'));
+                    const result = day.options[optionIndex].effect();
+                    renderResult(result);
+                });
+            });
+
+            updateDisplays();
+        }
+
+        // Renderiza o resultado de uma decisão
+        function renderResult(result) {
+            // Respostas do Neymar para cada resultado
+            const neymarReactions = {
+                positive: [
+                    "ISSO AÍ, MEU CONSAGRADO! Mandou bem demais!",
+                    "Tá jogando como craque! Continue assim!",
+                    "Arrasou, parceiro! Tá dando show!"
+                ],
+                neutral: [
+                    "Foi ok, mas podia ter sido melhor, né?",
+                    "Na média... mas você pode mais!",
+                    "Não foi ruim, mas também não foi aquela coisa toda..."
+                ],
+                negative: [
+                    "Puts, vacilou feio hein? Mas bola pra frente!",
+                    "Errar é humano, meu chapa! Na próxima acerta!",
+                    "Acontece... até eu erro uns pênaltis às vezes!"
+                ]
+            };
+
+            const randomReaction = neymarReactions[result.type][Math.floor(Math.random() * neymarReactions[result.type].length)];
+            
+            let html = `
+                <h1>Banco Central Simulator</h1>
+                <div class="day-indicator">${days[gameState.currentDay].title} - Resultado</div>
+                
+                <div class="result ${result.type}">
+                    <h3><i class="fas fa-poll"></i> ${result.message}</h3>
+                    <ul>
+            `;
+
+            result.results.forEach(res => {
+                html += `<li>${res}</li>`;
+            });
+
+            html += `
+                    </ul>
+                </div>
+                
+                <div class="character">
+                    <img src="download (2).jpeg" class="character-img" alt="Neymar Gerente">
+                    <div class="character-speech">
+                        <strong>Neymar Jr.:</strong> "${randomReaction}"
+                    </div>
+                </div>
+            `;
+
+            // Adiciona alerta de notícia para os primeiros dias
+            if (gameState.currentDay < days.length - 1) {
+                const newsEvents = [
+                    "Novo pacote econômico do governo anunciado para amanhã!",
+                    "Crise no Oriente Médio afeta preço do petróleo (+8% hoje)",
+                    "Indicadores econômicos dos EUA surpreendem mercado",
+                    "Especialistas preveem mudanças na política monetária global",
+                    "Protestos marcados para amanhã em várias capitais",
+                    "Relatório de emprego mostra sinais mistos no setor industrial",
+                    "Tensão comercial entre China e EUA aumenta - retaliações anunciadas"
+                ];
+                
+                html += `
+                    <div class="news-alert">
+                        <strong><i class="fas fa-bolt"></i> NOVIDADE:</strong> ${newsEvents[gameState.currentDay % newsEvents.length]}
+                    </div>
+                    
+                    <button class="option-btn" id="next-day-btn">
+                        <i class="fas fa-arrow-right"></i> Ir para o próximo dia
+                    </button>
+                `;
+            } else {
+                html += `
+                    <button class="option-btn" id="final-result-btn">
+                        <i class="fas fa-trophy"></i> Ver resultado final
+                    </button>
+                `;
+            }
+
+            container.innerHTML = html;
+
+            document.getElementById('next-day-btn')?.addEventListener('click', (e) => {
+                e.preventDefault();
+                gameState.currentDay++;
+                renderDay();
+            });
+
+            document.getElementById('final-result-btn')?.addEventListener('click', (e) => {
+                e.preventDefault();
+                gameState.currentDay++;
+                renderFinalResult();
+            });
+
+            updateDisplays();
+        }
+
+        // Renderiza o resultado final
+        function renderFinalResult() {
+            let performance;
+            if (gameState.score >= 120) {
+                performance = {
+                    text: '"BRABO DEMAIS, MEU CONSAGRADO! Você é o Pelé da economia! O mercado te ama, a inflação tá controlada e até o governo te respeita. Quer meu cargo permanentemente? Eu até ficaria com inveja, mas tô de malas prontas pra Paris!"',
+                    class: "positive"
+                };
+            } else if (gameState.score >= 80) {
+                performance = {
+                    text: '"Mandou bem, meu truta! Teve uns tropeços, mas no geral você se saiu bem. O mercado te respeita e o governo não te odeia. Bora pra próxima temporada? Eu te ensino uns drible pra lidar com os políticos!"',
+                    class: "neutral"
+                };
+            } else {
+                performance = {
+                    text: '"Eita, meu parceiro... Você deixou a inflação subir, o dólar disparar e todo mundo puto. Melhor voltar pra sua antiga função, hein? Mas relaxa, até eu já fiquei no banco algumas vezes... o importante é aprender com os erros!"',
+                    class: "negative"
+                };
+            }
+
+            let html = `
+                <h1>Banco Central Simulator</h1>
+                <div class="day-indicator">Resultado Final</div>
+                
+                <div class="character">
+                    <img src="download (2).jpeg" class="character-img" alt="Neymar Gerente">
+                    <div class="character-speech">
+                        <strong>Neymar Jr.:</strong> ${performance.text}
+                    </div>
+                </div>
+                
+                <div class="explanation">
+                    <h3><i class="fas fa-graduation-cap"></i> O que aprendemos sobre a Selic?</h3>
+                    <p>Durante este jogo, você aprendeu que a <b>Taxa Selic</b> é a principal ferramenta do Banco Central para:</p>
+                    <ul>
+                        <li><i class="fas fa-fire"></i> <b>Controlar a inflação</b>: Juros altos reduzem o consumo e freiam os preços</li>
+                        <li><i class="fas fa-chart-line"></i> <b>Estimular a economia</b>: Juros baixos incentivam empréstimos e investimentos</li>
+                        <li><i class="fas fa-dollar-sign"></i> <b>Regular o câmbio</b>: Juros altos atraem dólares e valorizam o Real</li>
+                        <li><i class="fas fa-balance-scale"></i> <b>Equilibrar interesses</b>: O BC deve conciliar governo, mercado e população</li>
+                    </ul>
+                    <p>A meta de inflação no Brasil é <b>3,5% ao ano</b>, e a Selic é o principal instrumento para alcançá-la.</p>
+                </div>
+                
+                <div class="result ${performance.class}">
+                    <h3><i class="fas fa-chart-line"></i> Resumo do Seu Mandato:</h3>
+                    <div class="stats">
+                        <p>- Inflação inicial: <b>7,5%</b> → final: <b>${gameState.economy.inflation.toFixed(1)}%</b></p>
+                        <p>- Selic inicial: <b>10,75%</b> → final: <b>${gameState.economy.selic.toFixed(2)}%</b></p>
+                        <p>- Dólar inicial: <b>R$5,00</b> → final: <b>R$${gameState.economy.dollar.toFixed(2)}</b></p>
+                        <p>- PIB: <b>+${gameState.economy.gdp.toFixed(1)}%</b> (variação durante seu mandato)</p>
+                        <p>- Desemprego: <b>${gameState.economy.unemployment.toFixed(1)}%</b> (inicial: 8,7%)</p>
+                        <p>- Pontuação final: <b>${gameState.score}/240</b></p>
+                    </div>
+                    
+                    ${gameState.achievements.length > 0 ? `
+                        <h4><i class="fas fa-trophy"></i> Conquistas:</h4>
+                        <ul>
+                            ${gameState.achievements.map(a => `<li><b>${a.name}:</b> ${a.description}</li>`).join('')}
+                        </ul>
+                    ` : ''}
+                </div>
+                
+                <button class="option-btn" id="restart-btn">
+                    <i class="fas fa-redo"></i> Jogar Novamente
+                </button>
+            `;
+
+            container.innerHTML = html;
+
+            document.getElementById('restart-btn').addEventListener('click', (e) => {
+                e.preventDefault();
+                resetGame();
+                renderIntro();
+            });
+
+            updateDisplays();
+        }
+
+        // Reseta o jogo
+        function resetGame() {
+            gameState.currentDay = -1;
+            gameState.score = 0;
+            gameState.economy = {
+                inflation: 7.5,
+                gdp: 0.3,
+                unemployment: 8.7,
+                selic: 10.75,
+                dollar: 5.00,
+                reserves: 340
+            };
+            gameState.achievements = [];
+            achievements.forEach(a => a.earned = false);
+        }
+
+        // Inicia o jogo
+        renderIntro();
+    </script>
+</body>
+</html>
